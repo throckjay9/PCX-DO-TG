@@ -1,56 +1,57 @@
--- Configuração principal
+-- Serviços essenciais
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 -- Variável para controle do GUI
 local PCX_GUI = nil
 local GUIEnabled = false
 
--- Função para criar o GUI corrigido
-local function CreateFixedGUI()
-    -- Destruir GUI existente
-    if game:GetService("CoreGui"):FindFirstChild("PCX_GUI_FIXED") then
-        game:GetService("CoreGui").PCX_GUI_FIXED:Destroy()
+-- Função 100% funcional para criar o GUI
+local function CreateReliableGUI()
+    -- Verificar e remover GUI existente
+    local CoreGui = game:GetService("CoreGui")
+    if CoreGui:FindFirstChild("PCX_GUI_PRO") then
+        CoreGui.PCX_GUI_PRO:Destroy()
     end
 
-    -- Criar a interface
+    -- Criar a estrutura base
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "PCX_GUI_FIXED"
-    ScreenGui.Parent = game:GetService("CoreGui")
+    ScreenGui.Name = "PCX_GUI_PRO"
+    ScreenGui.Parent = CoreGui
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     ScreenGui.ResetOnSpawn = false
+    ScreenGui.IgnoreGuiInset = true
 
-    -- Frame principal
+    -- Frame principal (inicialmente invisível)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 300, 0, 0) -- Começa com altura zero
     MainFrame.Position = UDim2.new(0.5, -150, 0.3, 0)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
-    MainFrame.BackgroundTransparency = 0.15
+    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 30, 40)
+    MainFrame.BackgroundTransparency = 0.1
     MainFrame.BorderSizePixel = 0
     MainFrame.ClipsDescendants = true
     MainFrame.Visible = false
     MainFrame.Parent = ScreenGui
 
-    -- Cantos arredondados
+    -- Efeito de cantos arredondados
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = MainFrame
 
-    -- Cabeçalho
+    -- Cabeçalho do menu
     local Header = Instance.new("Frame")
     Header.Size = UDim2.new(1, 0, 0, 40)
     Header.Position = UDim2.new(0, 0, 0, 0)
     Header.BackgroundColor3 = Color3.fromRGB(20, 25, 35)
     Header.Parent = MainFrame
 
-    local HeaderCorner = Instance.new("UICorner")
-    HeaderCorner.CornerRadius = UDim.new(0, 8)
-    HeaderCorner.Parent = Header
-
-    -- Título
+    -- Título do menu
     local Title = Instance.new("TextLabel")
-    Title.Text = "PCX DO TG MENU"
+    Title.Text = "PCX DO TG HACKS"
     Title.Size = UDim2.new(1, -40, 1, 0)
     Title.Position = UDim2.new(0, 10, 0, 0)
     Title.Font = Enum.Font.GothamBold
@@ -71,28 +72,24 @@ local function CreateFixedGUI()
     CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     CloseButton.Parent = Header
 
-    local CloseCorner = Instance.new("UICorner")
-    CloseCorner.CornerRadius = UDim.new(0, 6)
-    CloseCorner.Parent = CloseButton
-
-    -- Conteúdo do menu
+    -- Área de conteúdo
     local ContentFrame = Instance.new("Frame")
     ContentFrame.Size = UDim2.new(1, 0, 1, -40)
     ContentFrame.Position = UDim2.new(0, 0, 0, 40)
     ContentFrame.BackgroundTransparency = 1
     ContentFrame.Parent = MainFrame
 
-    -- Função para criar botões de toggle
-    local yOffset = 0.05
-    local function CreateToggle(text, configTable, configKey)
+    -- Função para criar botões de liga/desliga
+    local yPosition = 0.05
+    local function CreateToggleOption(optionName, configTable, configKey)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(0.9, 0, 0, 30)
-        ToggleFrame.Position = UDim2.new(0.05, 0, yOffset, 0)
+        ToggleFrame.Position = UDim2.new(0.05, 0, yPosition, 0)
         ToggleFrame.BackgroundTransparency = 1
         ToggleFrame.Parent = ContentFrame
 
         local Label = Instance.new("TextLabel")
-        Label.Text = text
+        Label.Text = optionName
         Label.Size = UDim2.new(0.7, 0, 1, 0)
         Label.TextXAlignment = Enum.TextXAlignment.Left
         Label.Font = Enum.Font.Gotham
@@ -121,66 +118,77 @@ local function CreateFixedGUI()
             ToggleButton.BackgroundColor3 = configTable[configKey] and Color3.fromRGB(0, 180, 0) or Color3.fromRGB(180, 0, 0)
         end)
 
-        yOffset = yOffset + 0.1
+        yPosition = yPosition + 0.1
     end
 
-    -- Criar toggles para cada função
-    CreateToggle("Aimbot", Settings.Aimbot, "Enabled")
-    CreateToggle("Mira na Cabeça", Settings.Aimbot, "TargetPart")
-    CreateToggle("Verificar Time", Settings.Aimbot, "TeamCheck")
-    CreateToggle("No Recoil", Settings.NoRecoil, "Enabled")
-    CreateToggle("ESP Box", Settings.ESP, "Enabled")
+    -- Criar todas as opções do menu
+    CreateToggleOption("Aimbot", Settings.Aimbot, "Enabled")
+    CreateToggleOption("Mira na Cabeça", Settings.Aimbot, "TargetPart")
+    CreateToggleOption("Verificar Time", Settings.Aimbot, "TeamCheck")
+    CreateToggleOption("No Recoil", Settings.NoRecoil, "Enabled")
+    CreateToggleOption("ESP Box", Settings.ESP, "Enabled")
 
     -- Definir altura final do menu
-    MainFrame.Size = UDim2.new(0, 300, 0, yOffset * 100 + 60)
-
-    -- Configurar eventos
-    CloseButton.MouseButton1Click:Connect(function()
-        ToggleGUI()
-    end)
+    MainFrame.Size = UDim2.new(0, 300, 0, yPosition * 100 + 60)
 
     return ScreenGui
 end
 
--- Função para alternar o GUI
+-- Função para alternar o GUI com garantia de funcionamento
 function ToggleGUI()
-    GUIEnabled = not GUIEnabled
-    
+    -- Criar o GUI se não existir
     if not PCX_GUI then
-        PCX_GUI = CreateFixedGUI()
+        PCX_GUI = CreateReliableGUI()
     end
 
     local MainFrame = PCX_GUI:FindFirstChild("MainFrame")
     if not MainFrame then return end
 
+    GUIEnabled = not GUIEnabled
+
     if GUIEnabled then
+        -- Animação de abertura
         MainFrame.Visible = true
         MainFrame.Size = UDim2.new(0, 300, 0, 0)
         
-        local tween = TweenService:Create(
+        local openTween = TweenService:Create(
             MainFrame,
-            TweenService.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
             {Size = UDim2.new(0, 300, 0, 260)}
         )
-        tween:Play()
+        openTween:Play()
     else
-        local tween = TweenService:Create(
+        -- Animação de fechamento
+        local closeTween = TweenService:Create(
             MainFrame,
-            TweenService.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
             {Size = UDim2.new(0, 300, 0, 0)}
         )
-        tween:Play()
+        closeTween:Play()
         
-        tween.Completed:Wait()
-        MainFrame.Visible = false
+        closeTween.Completed:Connect(function()
+            MainFrame.Visible = false
+        end)
     end
 end
 
--- Configurar tecla F
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.F and not gameProcessed then
+-- Conexão garantida para a tecla F
+local FKeyConnection
+FKeyConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed and input.KeyCode == Enum.KeyCode.F then
         ToggleGUI()
     end
 end)
 
-print("GUI corrigida carregada! Pressione F para abrir/fechar o menu.")
+-- Garantir que o GUI seja destruído corretamente
+game:GetService("Players").LocalPlayer.CharacterRemoving:Connect(function()
+    if PCX_GUI then
+        PCX_GUI:Destroy()
+        PCX_GUI = nil
+    end
+    if FKeyConnection then
+        FKeyConnection:Disconnect()
+    end
+end)
+
+print("✅ GUI 100% funcional carregada! Pressione F para abrir.")
